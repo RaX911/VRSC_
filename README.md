@@ -6,18 +6,6 @@ apt update && apt upgrade && apt install git -y
 ```
 
 ```
-apt install bc jq libjansson wget proot-distro wget curl -y
-```
-
-```
-proot-distro install ubuntu
-```
-
-```
-git clone https://github.com/RaX911/VRSC_.git
-```
-
-```
 cd VRSC_
 ```
 
