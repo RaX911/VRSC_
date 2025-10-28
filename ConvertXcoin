@@ -1,0 +1,258 @@
+#!/bin/bash
+
+# VRSC to IDR Converter using CoinGecko API
+# dengan animasi loading digital
+
+# Colors for UI
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Animation characters
+ANIM_CHARS=("▰" "▱")
+SPINNER=("⣷" "⣯" "⣟" "⡿" "⢿" "⣻" "⣽" "⣾")
+
+# Function to display header
+show_header() {
+    clear
+    echo -e "${PURPLE}"
+    echo "╔══════════════════════════════════════════════════════════╗"
+    echo "║               VRSC TO IDR CONVERTER                     ║"
+    echo "║               CoinGecko API Exchange                    ║"
+    echo "║                 All Platform Rates                      ║"
+    echo "╚══════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+}
+
+# Function to show loading animation
+show_loading() {
+    local percent=$1
+    local width=50
+    local filled=$((percent * width / 100))
+    local empty=$((width - filled))
+    
+    # Create progress bar
+    local bar=""
+    for ((i=0; i<filled; i++)); do
+        bar+="${ANIM_CHARS[0]}"
+    done
+    for ((i=0; i<empty; i++)); do
+        bar+="${ANIM_CHARS[1]}"
+    done
+    
+    # Spinner index
+    local spin_index=$((percent % ${#SPINNER[@]}))
+    
+    echo -ne "${CYAN}${SPINNER[$spin_index]} Loading: [${bar}] ${percent}% ${NC}\r"
+}
+
+# Function to simulate progressive loading
+progressive_loading() {
+    echo -e "${YELLOW}Initializing VRSC to IDR Converter...${NC}"
+    
+    for i in {1..100}; do
+        # Simulate different tasks at different percentages
+        if [ $i -eq 10 ]; then
+            echo -e "${BLUE}✓ Connecting to CoinGecko API...${NC}"
+        elif [ $i -eq 30 ]; then
+            echo -e "${BLUE}✓ Fetching VRSC price data...${NC}"
+        elif [ $i -eq 50 ]; then
+            echo -e "${BLUE}✓ Calculating exchange rates...${NC}"
+        elif [ $i -eq 70 ]; then
+            echo -e "${BLUE}✓ Gathering platform data...${NC}"
+        elif [ $i -eq 90 ]; then
+            echo -e "${BLUE}✓ Finalizing conversion...${NC}"
+        fi
+        
+        show_loading $i
+        sleep 0.05
+    done
+    echo -e "\n${GREEN}✓ Loading complete!${NC}"
+    echo "═══════════════════════════════════════════════════"
+}
+
+# Function to get VRSC price from CoinGecko
+get_vrsc_price() {
+    local api_url="https://api.coingecko.com/api/v3/simple/price?ids=verus-coin&vs_currencies=idr&include_24hr_change=true&include_last_updated_at=true"
+    
+    echo -e "${CYAN}Fetching current VRSC price...${NC}"
+    
+    # Show mini loading for API call
+    for i in {1..3}; do
+        echo -ne "${CYAN}Connecting to API${SPINNER[$i]} ${NC}\r"
+        sleep 0.2
+    done
+    
+    response=$(curl -s "$api_url")
+    
+    if [ $? -ne 0 ] || [ -z "$response" ]; then
+        echo -e "${RED}✗ Error: Failed to fetch data from CoinGecko API${NC}"
+        return 1
+    fi
+    
+    vrsc_price_idr=$(echo "$response" | grep -o '"idr":[0-9]*\.\?[0-9]*' | cut -d':' -f2)
+    vrsc_change_24h=$(echo "$response" | grep -o '"idr_24h_change":[0-9.-]*' | cut -d':' -f2)
+    last_updated=$(echo "$response" | grep -o '"last_updated_at":[0-9]*' | cut -d':' -f2)
+    
+    if [ -z "$vrsc_price_idr" ]; then
+        echo -e "${RED}✗ Error: Could not parse VRSC price${NC}"
+        return 1
+    fi
+    
+    return 0
+}
+
+# Function to format number with Indonesian Rupiah format
+format_idr() {
+    local number=$1
+    echo "Rp $(printf "%.2f" $number)" | sed ':a;s/\B[0-9]\{3\}\>/,&/;ta'
+}
+
+# Function to display exchange platforms
+show_exchange_platforms() {
+    echo -e "\n${GREEN}📊 Available Exchange Platforms:${NC}"
+    echo -e "${CYAN}┌──────────────────────────────────────────┐${NC}"
+    echo -e "${CYAN}│ ${YELLOW}• TradeOgre${NC}                               ${CYAN}│${NC}"
+    echo -e "${CYAN}│ ${YELLOW}• SouthXchange${NC}                            ${CYAN}│${NC}"
+    echo -e "${CYAN}│ ${YELLOW}• CoinEx${NC}                                  ${CYAN}│${NC}"
+    echo -e "${CYAN}│ ${YELLOW}• Altedge${NC}                                 ${CYAN}│${NC}"
+    echo -e "${CYAN}│ ${YELLOW}• VerusCoin Pools${NC}                         ${CYAN}│${NC}"
+    echo -e "${CYAN}└──────────────────────────────────────────┘${NC}"
+}
+
+# Function to calculate conversion
+calculate_conversion() {
+    local vrsc_amount=$1
+    local vrsc_price=$2
+    
+    local total_idr=$(echo "$vrsc_amount * $vrsc_price" | bc -l)
+    echo "$total_idr"
+}
+
+# Function to display conversion result
+show_conversion_result() {
+    local vrsc_amount=$1
+    local vrsc_price=$2
+    local total_idr=$3
+    
+    echo -e "\n${GREEN}🎯 CONVERSION RESULT:${NC}"
+    echo -e "${CYAN}┌──────────────────────────────────────────┐${NC}"
+    echo -e "${CYAN}│ ${YELLOW}VRSC Amount:${NC} $vrsc_amount VRSC              ${CYAN}│${NC}"
+    echo -e "${CYAN}│ ${YELLOW}Current Price:${NC} $(format_idr $vrsc_price)        ${CYAN}│${NC}"
+    echo -e "${CYAN}│ ${YELLOW}Total IDR:${NC} $(format_idr $total_idr)        ${CYAN}│${NC}"
+    
+    # Show 24h change if available
+    if [ ! -z "$vrsc_change_24h" ]; then
+        local change_color=$GREEN
+        if (( $(echo "$vrsc_change_24h < 0" | bc -l) )); then
+            change_color=$RED
+        fi
+        echo -e "${CYAN}│ ${YELLOW}24h Change:${NC} ${change_color}$vrsc_change_24h%${NC}                   ${CYAN}│${NC}"
+    fi
+    
+    # Show last updated time if available
+    if [ ! -z "$last_updated" ]; then
+        local human_time=$(date -d "@$last_updated" "+%Y-%m-%d %H:%M:%S")
+        echo -e "${CYAN}│ ${YELLOW}Last Updated:${NC} $human_time    ${CYAN}│${NC}"
+    fi
+    
+    echo -e "${CYAN}└──────────────────────────────────────────┘${NC}"
+}
+
+# Function to show exchange rates table
+show_exchange_rates() {
+    local vrsc_price=$1
+    
+    echo -e "\n${GREEN}💱 EXCHANGE RATES TABLE:${NC}"
+    echo -e "${CYAN}┌──────────────┬──────────────────────────┐${NC}"
+    echo -e "${CYAN}│ ${YELLOW}VRSC${NC}        │ ${YELLOW}IDR${NC}                      ${CYAN}│${NC}"
+    echo -e "${CYAN}├──────────────┼──────────────────────────┤${NC}"
+    
+    # Show various amounts
+    local amounts=(0.1 0.5 1 5 10 50 100 500 1000)
+    for amount in "${amounts[@]}"; do
+        local converted=$(echo "$amount * $vrsc_price" | bc -l)
+        local formatted_amount=$(printf "%8.2f" $amount)
+        local formatted_idr=$(format_idr $converted)
+        echo -e "${CYAN}│ ${YELLOW}$formatted_amount${NC}   │ $formatted_idr${CYAN}│${NC}"
+    done
+    
+    echo -e "${CYAN}└──────────────┴──────────────────────────┘${NC}"
+}
+
+# Main function
+main() {
+    show_header
+    progressive_loading
+    
+    # Get VRSC price
+    if ! get_vrsc_price; then
+        echo -e "${RED}Failed to get VRSC price. Exiting...${NC}"
+        exit 1
+    fi
+    
+    echo -e "\n${GREEN}✅ Current VRSC Price: $(format_idr $vrsc_price_idr)${NC}"
+    
+    if [ ! -z "$vrsc_change_24h" ]; then
+        local change_color=$GREEN
+        if (( $(echo "$vrsc_change_24h < 0" | bc -l) )); then
+            change_color=$RED
+        fi
+        echo -e "${change_color}24h Change: $vrsc_change_24h%${NC}"
+    fi
+    
+    show_exchange_platforms
+    
+    while true; do
+        echo -e "\n${CYAN}Enter VRSC amount to convert to IDR (or 'q' to quit):${NC}"
+        read -p "VRSC Amount: " vrsc_amount
+        
+        if [[ "$vrsc_amount" == "q" || "$vrsc_amount" == "quit" ]]; then
+            echo -e "${YELLOW}Thank you for using VRSC Converter!${NC}"
+            break
+        fi
+        
+        # Validate input
+        if ! [[ "$vrsc_amount" =~ ^[0-9]+(\.[0-9]+)?$ ]] || (( $(echo "$vrsc_amount <= 0" | bc -l) )); then
+            echo -e "${RED}✗ Please enter a valid positive number${NC}"
+            continue
+        fi
+        
+        # Calculate conversion
+        total_idr=$(calculate_conversion "$vrsc_amount" "$vrsc_price_idr")
+        
+        # Show result
+        show_conversion_result "$vrsc_amount" "$vrsc_price_idr" "$total_idr"
+        
+        # Ask if user wants to see exchange rates table
+        echo -e "\n${CYAN}Show exchange rates table? (y/n):${NC}"
+        read -p "Choice: " show_table
+        
+        if [[ "$show_table" == "y" || "$show_table" == "yes" ]]; then
+            show_exchange_rates "$vrsc_price_idr"
+        fi
+        
+        echo -e "\n${YELLOW}──────────────────────────────────────────${NC}"
+    done
+}
+
+# Check if bc is installed (for calculations)
+if ! command -v bc &> /dev/null; then
+    echo -e "${RED}Error: 'bc' calculator is required but not installed.${NC}"
+    echo "Install it with: sudo apt-get install bc"
+    exit 1
+fi
+
+# Check if curl is installed
+if ! command -v curl &> /dev/null; then
+    echo -e "${RED}Error: 'curl' is required but not installed.${NC}"
+    echo "Install it with: sudo apt-get install curl"
+    exit 1
+fi
+
+# Run main function
+main
