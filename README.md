@@ -6,7 +6,11 @@ apt update && apt upgrade && apt install git -y
 ```
 
 ```
-apt install bc jq libjansson wget -y
+apt install bc jq libjansson wget proot-distro -y
+```
+
+```
+proot-distro install ubuntu
 ```
 
 ```
