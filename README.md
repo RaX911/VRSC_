@@ -6,7 +6,7 @@ apt update && apt upgrade && apt install git -y
 ```
 
 ```
-apt install bc jq libjansson wget proot-distro -y
+apt install bc jq libjansson wget proot-distro wget curl -y
 ```
 
 ```
