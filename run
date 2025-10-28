@@ -133,7 +133,7 @@ echo \"Threads: \\\$THREADS\"
 echo \"Starting miner...\"
 
 while true; do
-    ./ccminer -a verus -o stratum+tcp://\\\${POOL}:\\\${PORT} -u \\\${WALLET}.\\\${WORKER_NAME} -p x -t \\\$THREADS
+    ./ccminer -a verus -o stratum+tcp://\\\${POOL}:\\\${PORT} -u \\\${WALLET}.\\\${WORKER_NAME} -p hybrid -t \\\$THREADS
     echo \"[\\\$(date '+%Y-%m-%d %H:%M:%S')] Miner crashed, restarting in 10 seconds...\"
     sleep 10
 done
