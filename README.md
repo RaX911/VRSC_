@@ -6,7 +6,7 @@ apt update && apt upgrade && apt install git -y
 ```
 
 ```
-git clone https://github.com/RaX911/VRSC.git
+git clone https://github.com/RaX911/VRSC_.git
 ```
 
 ```
