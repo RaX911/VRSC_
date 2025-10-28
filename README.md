@@ -2,7 +2,7 @@
 Welcome To VRSC Miner Coin VERUS Update New Version With Proot-Distro Automated Installed Os Ubuntu WithOut Rootless..
 
 ```
-apt update && apt upgrade && apt install git -y
+apt update && apt upgrade && apt install git && apt install bc jq libjansson -y
 ```
 
 ```
