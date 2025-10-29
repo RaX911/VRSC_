@@ -30,5 +30,5 @@ Jika Anda Ingin Mengecek Harga VerusCoin Di Exchange program di repo saya ini an
 Untuk Donasi Kalian :
 VRSC (VERUS COIN)
 ```
-RN3QdSsb9zm22tYdtMkXt4XWiQYUQZfwLN
+RJKoByjK2dtaukP2zyYfQ62BcPv2bsVavz
 ```
